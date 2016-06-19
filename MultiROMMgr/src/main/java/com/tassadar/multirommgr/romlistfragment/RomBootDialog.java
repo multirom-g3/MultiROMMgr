@@ -132,7 +132,14 @@ public class RomBootDialog extends DialogFragment implements View.OnClickListene
                 }
 
                 SharedPreferences p = MgrApp.getPreferences();
-                Device dev = Device.load(p.getString(SettingsFragment.DEV_DEVICE_NAME, Build.DEVICE));
+
+                Device dev;
+                if (p.getString(SettingsFragment.DEV_DEVICE_NAME, Build.DEVICE).equals("g3")) {
+                    dev = Device.load(p.getString(SettingsFragment.DEV_DEVICE_NAME, Build.PRODUCT));
+                } else {
+                    dev = Device.load(p.getString(SettingsFragment.DEV_DEVICE_NAME, Build.DEVICE));
+                }
+
                 if(dev == null) {
                     a.runOnUiThread(new SetErrorTextRunnable(R.string.rom_boot_failed));
                     return;

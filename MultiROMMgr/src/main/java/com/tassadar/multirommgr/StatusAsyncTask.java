@@ -112,7 +112,14 @@ public class StatusAsyncTask extends AsyncTask <Void, String, StatusAsyncTask.Re
         publishProgress(Utils.getString(R.string.prog_detecting_dev));
 
         SharedPreferences p = MgrApp.getPreferences();
-        Device dev = Device.load(p.getString(SettingsFragment.DEV_DEVICE_NAME, Build.DEVICE));
+
+        Device dev;
+        if (p.getString(SettingsFragment.DEV_DEVICE_NAME, Build.DEVICE).equals("g3")) {
+            dev = Device.load(p.getString(SettingsFragment.DEV_DEVICE_NAME, Build.PRODUCT));
+        } else {
+            dev = Device.load(p.getString(SettingsFragment.DEV_DEVICE_NAME, Build.DEVICE));
+        }
+
         if(dev == null) {
             res.code = RES_UNSUPPORTED;
             return res;

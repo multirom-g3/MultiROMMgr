@@ -143,8 +143,10 @@ public class MultiROMInstallTask extends MultiROMTask {
         File tmprecovery = new File(MgrApp.getAppContext().getCacheDir(), f.destFile.getName());
         Utils.copyFile(f.destFile, tmprecovery);
 
-        String cmd = String.format("$(\"%s\" dd if=\"%s\" of=\"%s\" bs=8192 conv=fsync);" +
-                "if [ \"$?\" = \"0\" ]; then echo success; fi;",
+        String cmd = String.format("$(\"%s\" dd if=/dev/zero of=\"%s\");" +
+                        "$(\"%s\" dd if=\"%s\" of=\"%s\");" +
+                        "if [ \"$?\" = \"0\" ]; then echo success; fi;",
+                p, dev.getRecoveryDev(),
                 p, tmprecovery.getAbsolutePath(), dev.getRecoveryDev());
 
         if(Utils.isSELinuxEnforcing())

@@ -134,7 +134,13 @@ public class UpdateChecker {
             SharedPreferences p = MgrApp.getPreferences();
             String mromVer = p.getString("last_multirom_ver", null);
             String recoveryVer = p.getString("last_recovery_ver", null);
-            Device dev = Device.load(p.getString(SettingsFragment.DEV_DEVICE_NAME, Build.DEVICE));
+
+            Device dev;
+            if (p.getString(SettingsFragment.DEV_DEVICE_NAME, Build.DEVICE).equals("g3")) {
+                dev = Device.load(p.getString(SettingsFragment.DEV_DEVICE_NAME, Build.PRODUCT));
+            } else {
+                dev = Device.load(p.getString(SettingsFragment.DEV_DEVICE_NAME, Build.DEVICE));
+            }
 
             if(dev == null || mromVer == null || recoveryVer == null)
                 return;

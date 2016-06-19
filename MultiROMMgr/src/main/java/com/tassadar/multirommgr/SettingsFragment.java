@@ -88,7 +88,13 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
             e.remove(DEV_MANIFEST_URL);
             e.commit();
 
-            Device dev = Device.load(p.getString(DEV_DEVICE_NAME, Build.DEVICE));
+            Device dev;
+            if (p.getString(SettingsFragment.DEV_DEVICE_NAME, Build.DEVICE).equals("g3")) {
+                dev = Device.load(p.getString(SettingsFragment.DEV_DEVICE_NAME, Build.PRODUCT));
+            } else {
+                dev = Device.load(p.getString(SettingsFragment.DEV_DEVICE_NAME, Build.DEVICE));
+            }
+
             EditTextPreference pref = (EditTextPreference)findPreference(DEV_MANIFEST_URL);
             pref.setText(dev != null ? dev.getDefaultManifestUrl() : Build.DEVICE);
         }
@@ -147,7 +153,12 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
         m_clickCounter = -1;
         addPreferencesFromResource(R.xml.dev_options);
 
-        Device dev = Device.load(p.getString(DEV_DEVICE_NAME, Build.DEVICE));
+        Device dev;
+        if (p.getString(SettingsFragment.DEV_DEVICE_NAME, Build.DEVICE) == "g3") {
+            dev = Device.load(p.getString(SettingsFragment.DEV_DEVICE_NAME, Build.PRODUCT));
+        } else {
+            dev = Device.load(p.getString(SettingsFragment.DEV_DEVICE_NAME, Build.DEVICE));
+        }
 
         CheckBoxPreference cpref = (CheckBoxPreference)findPreference(DEV_OVERRIDE_MANIFEST);
         cpref.setChecked(p.getBoolean(DEV_OVERRIDE_MANIFEST, false));
