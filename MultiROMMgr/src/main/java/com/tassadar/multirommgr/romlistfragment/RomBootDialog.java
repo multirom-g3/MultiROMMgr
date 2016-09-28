@@ -150,7 +150,7 @@ public class RomBootDialog extends DialogFragment implements View.OnClickListene
             }
 
             if(!has_kexec && m.isKexecNeededFor(m_rom)) {
-                if (!m.findNokexecSupported()) {
+                if (!m.hasNoKexec()) {
                         a.runOnUiThread(new SetErrorTextRunnable(R.string.rom_boot_kexec));
                         return;
                 } else {

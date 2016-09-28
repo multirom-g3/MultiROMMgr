@@ -162,6 +162,7 @@ public class StatusAsyncTask extends AsyncTask <Void, String, StatusAsyncTask.Re
 
         res.kernel = new Kernel();
         res.kernel.findKexecHardboot(dev);
+        res.multirom.findNokexecSupported();
 
         publishProgress(Utils.getString(R.string.prog_download_manifest));
 
@@ -275,7 +276,8 @@ public class StatusAsyncTask extends AsyncTask <Void, String, StatusAsyncTask.Re
         }
 
         String kexec_text = t.getResources().getString(
-                m_res.kernel.hasKexec() ? R.string.has_kexec : R.string.no_kexec);
+                m_res.kernel.hasKexec() ? R.string.has_kexec :
+                        (m_res.multirom.hasNoKexec() ? R.string.has_nokexec : R.string.no_kexec));
 
         String update = t.getResources().getString(R.string.update_available);
 

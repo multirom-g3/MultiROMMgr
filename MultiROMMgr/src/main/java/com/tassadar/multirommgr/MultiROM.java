@@ -100,12 +100,15 @@ public class MultiROM {
             if (entry.startsWith("no_kexec=")) {
                 entry = entry.substring(9); // strlen("no_kexec=");
                 if(!entry.isEmpty()) {
-            if (!entry.startsWith("0"))
+            if (!entry.startsWith("0")) {
+                m_hasNoKexec = true;
                 return true;
+            }
         }
             }
         }
 
+        m_hasNoKexec = false;
         return false;
     }
 
@@ -513,9 +516,11 @@ public class MultiROM {
     }
     public String getPath() { return m_path; }
     public ArrayList<Rom> getRoms() { return m_roms; }
+    public boolean hasNoKexec() { return m_hasNoKexec; }
 
     private String m_path;
     private String m_version;
     private ArrayList<Rom> m_roms = new ArrayList<Rom>();
     private List<String> m_predefIcons;
+    private boolean m_hasNoKexec;
 }
