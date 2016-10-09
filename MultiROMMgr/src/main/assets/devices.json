@@ -654,7 +654,7 @@
             ]
         },
         {
-            "names": [ "d850" ],
+            "names": [ "d850, g3_att_us" ],
             "manifest_url": "https://multirom-g3.github.io/manifests/d850.json",
             "check_gpg": false,
             "ubuntu_touch": {
@@ -700,7 +700,7 @@
             ]
         },
         {
-            "names": [ "d852" ],
+            "names": [ "d852, g3_bell_ca" ],
             "manifest_url": "https://multirom-g3.github.io/manifests/d852.json",
             "check_gpg": false,
             "ubuntu_touch": {
@@ -723,7 +723,7 @@
             ]
         },
         {
-            "names": [ "d855" ],
+            "names": [ "d855, g3_global_com" ],
             "manifest_url": "https://multirom-g3.github.io/manifests/d855.json",
             "check_gpg": false,
             "ubuntu_touch": {
@@ -746,7 +746,7 @@
             ]
         },
         {
-            "names": [ "d856" ],
+            "names": [ "d856, g3_open_cis" ],
             "manifest_url": "https://multirom-g3.github.io/manifests/d856.json",
             "check_gpg": false,
             "ubuntu_touch": {
@@ -769,7 +769,7 @@
             ]
         },
         {
-            "names": [ "f400" ],
+            "names": [ "f400, g3_kt_kr" ],
             "manifest_url": "https://multirom-g3.github.io/manifests/f400.json",
             "check_gpg": false,
             "ubuntu_touch": {
@@ -792,7 +792,7 @@
             ]
         },
         {
-            "names": [ "ls990" ],
+            "names": [ "ls990, g3_spr_us" ],
             "manifest_url": "https://multirom-g3.github.io/manifests/ls990.json",
             "check_gpg": false,
             "ubuntu_touch": {
@@ -815,7 +815,7 @@
             ]
         },
         {
-            "names": [ "vs985" ],
+            "names": [ "vs985, g3_vzw_us" ],
             "manifest_url": "https://multirom-g3.github.io/manifests/vs985.json",
             "check_gpg": false,
             "ubuntu_touch": {
