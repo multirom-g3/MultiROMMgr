@@ -71,6 +71,15 @@ public class Rom implements Parcelable {
         this.icon_hash = null;
     }
 
+    public Rom(String name, int type, boolean isExternal, String ext_Path) {
+        this.name = name;
+        this.type = type;
+        this.icon_id = R.drawable.romic_default;
+        this.icon_hash = null;
+        this.isExternal = isExternal;
+        this.ext_Path = ext_Path;
+    }
+
     public Rom(Parcel in) {
         this.name = in.readString();
         this.type = in.readInt();
@@ -129,6 +138,8 @@ public class Rom implements Parcelable {
     public int type;
     public int icon_id;
     public String icon_hash;
+    public boolean isExternal = false;
+    public String ext_Path;
 
     private Drawable m_icon;
 }

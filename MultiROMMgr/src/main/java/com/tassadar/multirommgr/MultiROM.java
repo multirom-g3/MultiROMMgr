@@ -19,9 +19,11 @@ package com.tassadar.multirommgr;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Build;
 import android.util.Log;
 
 import com.tassadar.multirommgr.romlistwidget.RomListDataProvider;
@@ -159,8 +161,80 @@ public class MultiROM {
 
         Collections.sort(m_roms, new Rom.NameComparator());
 
+        // External ROMS
+        findExternalRoms();
+
         loadRomIconData();
         storeRomDataToProvider();
+    }
+
+    public void findExternalRoms() {
+        String internal = findInternalRomName();
+        ArrayList<String> externalPaths = new ArrayList<String>();
+
+        File[] storagePaths = MgrApp.getAppContext().getExternalFilesDirs(null);
+        for (File dir : storagePaths)
+        {
+            String path = dir.getAbsolutePath().split("Android")[0];
+
+            String device;
+            SharedPreferences p = MgrApp.getPreferences();
+            if (p.getString(Build.DEVICE, "").equals("g3")) {
+                    device = p.getString(SettingsFragment.DEV_DEVICE_NAME, Build.PRODUCT);
+            } else {
+                    device = p.getString(SettingsFragment.DEV_DEVICE_NAME, Build.DEVICE);
+            }
+
+            if (!path.equals("/storage/emulated/0/"))
+            {
+                Log.e(TAG, "Path is: " + path);
+
+                List<String> out = Shell.SU.run(
+                        "folder=\"%smultirom-%s/\";" +
+                        "if [ -d \"$folder\" ]; then" +
+                        "     echo \"$folder\";" +
+                        "     exit 0;" +
+                        "fi;"
+                        , path, device);
+
+                if (out == null || out.isEmpty())
+                    continue;
+                else
+                {
+                    Log.e(TAG, "External MRom path is: " + out.get(0));
+                    externalPaths.add(out.get(0));
+                }
+            }
+        }
+
+        m_extPaths = externalPaths;
+
+        if (m_extPaths != null && !m_extPaths.isEmpty())
+        {
+            for (String m_extPath : m_extPaths)
+            {
+                List<String> out = Shell.SU.run("\'%s/busybox\' ls -1 -p \"%s/\"", m_path, m_extPath);
+                if (out == null || out.isEmpty())
+                    return;
+
+                Rom rom;
+                int type;
+                String name;
+
+                for(int i = 0; i < out.size(); ++i) {
+                    name = out.get(i);
+                    if(!name.endsWith("/"))
+                        continue;
+
+                    name = name.substring(0, name.length() - 1);
+                    type = Rom.ROM_SECONDARY;
+
+                    rom = new Rom(name, type, true, m_extPath);
+                    m_roms.add(rom);
+                }
+            }
+        }
+
     }
 
     private void loadRomIconData() {
@@ -175,6 +249,26 @@ public class MultiROM {
                 "    cat \"$d/.icon_data\";" +
                 "done;",
                 m_path, m_path);
+
+        if (m_extPaths != null && !m_extPaths.isEmpty())
+        {
+            for (String path : m_extPaths)
+            {
+                List<String> cmd = Shell.SU.run(
+                        "IFS=$'\\n'; " +
+                        "cd \"%s\"; " +
+                        "for d in $(\"%s/busybox\" ls -1); do " +
+                        "    ([ ! -d \"$d\" ]) && continue;" +
+                        "    ([ ! -f \"$d/.icon_data\" ]) && continue;" +
+                        "    echo \"ROM:$d\";" +
+                        "    cat \"$d/.icon_data\";" +
+                        "done;",
+                        path, m_path);
+
+                if (cmd != null || !cmd.isEmpty())
+                    out.addAll(cmd);
+            }
+        }
 
         if (out == null || out.isEmpty())
             return;
@@ -287,7 +381,10 @@ public class MultiROM {
                     "fi",
                     m_path, m_path, m_path, new_name, new_name);
         } else {
-            Shell.SU.run("cd \"%s/roms/\" && mv '%s' '%s'", m_path, rom.name, new_name);
+            if (rom.isExternal)
+                Shell.SU.run("cd \"%s/\" && mv '%s' '%s'", rom.ext_Path, rom.name, new_name);
+            else
+                Shell.SU.run("cd \"%s/roms/\" && mv '%s' '%s'", m_path, rom.name, new_name);
         }
     }
 
@@ -297,13 +394,19 @@ public class MultiROM {
             return;
         }
 
-        Shell.SU.run("'%s/busybox' chattr -R -i '%s/roms/%s'; '%s/busybox' rm -rf '%s/roms/%s'",
-                m_path, m_path, rom.name, m_path, m_path, rom.name);
+        if (rom.isExternal)
+            Shell.SU.run("'%s/busybox' chattr -R -i '%s/%s'; '%s/busybox' rm -rf '%s/%s'",
+                    m_path, rom.ext_Path, rom.name, m_path, rom.ext_Path, rom.name);
+        else
+            Shell.SU.run("'%s/busybox' chattr -R -i '%s/roms/%s'; '%s/busybox' rm -rf '%s/roms/%s'",
+                    m_path, m_path, rom.name, m_path, m_path, rom.name);
     }
 
     public void bootRom(Rom rom) {
         String name = (rom.type == Rom.ROM_PRIMARY) ? INTERNAL_ROM : rom.name;
-        Shell.SU.run("%s/multirom --boot-rom='%s'", m_path, name);
+        // TODO: fix booting into external ROMS
+        if(!rom.isExternal)
+            Shell.SU.run("%s/multirom --boot-rom='%s'", m_path, name);
     }
 
     public boolean isKexecNeededFor(Rom rom) {
@@ -311,18 +414,38 @@ public class MultiROM {
             return false;
 
         // if android ROM check for boot.img, else kexec
-        List<String> out = Shell.SU.run(String.format(
-                "cd \"%s/roms/%s\"; " +
-                "if [ -d boot ] && [ -d system ] && [ -d data ] && [ -d cache ]; then" +
-                "    if [ -e boot.img ]; then" +
-                "        echo kexec;" +
-                "    else" +
-                "        echo normal;" +
-                "    fi;" +
-                "else" +
-                "    echo kexec;" +
-                "fi;",
-                m_path, rom.name));
+        List<String> out;
+
+        if (rom.isExternal)
+        {
+            out = Shell.SU.run(String.format(
+                    "cd \"%s/%s\"; " +
+                    "if [ -d boot ] && [ -d system ] && [ -d data ] && [ -d cache ]; then" +
+                    "    if [ -e boot.img ]; then" +
+                    "        echo kexec;" +
+                    "    else" +
+                    "        echo normal;" +
+                    "    fi;" +
+                    "else" +
+                    "    echo kexec;" +
+                    "fi;",
+                    rom.ext_Path, rom.name));
+        }
+        else
+        {
+            out = Shell.SU.run(String.format(
+                    "cd \"%s/roms/%s\"; " +
+                    "if [ -d boot ] && [ -d system ] && [ -d data ] && [ -d cache ]; then" +
+                    "    if [ -e boot.img ]; then" +
+                    "        echo kexec;" +
+                    "    else" +
+                    "        echo normal;" +
+                    "    fi;" +
+                    "else" +
+                    "    echo kexec;" +
+                    "fi;",
+                    m_path, rom.name));
+        }
 
         if (out == null || out.isEmpty()) {
             Log.e(TAG, "Failed to check for kexec in ROM " + rom.name);
@@ -486,11 +609,22 @@ public class MultiROM {
             }
         }
 
-        Shell.SU.run(
-                "cd '%s/roms/%s' && " +
-                "echo '%s' > .icon_data &&" +
-                "echo '%s' >> .icon_data"
-                , m_path, name, ic_type, data);
+        if (rom.isExternal)
+        {
+            Shell.SU.run(
+                    "cd '%s/%s' && " +
+                    "echo '%s' > .icon_data &&" +
+                    "echo '%s' >> .icon_data"
+                    , rom.ext_Path, name, ic_type, data);
+        }
+        else
+        {
+            Shell.SU.run(
+                    "cd '%s/roms/%s' && " +
+                    "echo '%s' > .icon_data &&" +
+                    "echo '%s' >> .icon_data"
+                    , m_path, name, ic_type, data);
+        }
 
         rom.icon_id = icon_id;
         rom.icon_hash = hash;
@@ -523,4 +657,5 @@ public class MultiROM {
     private ArrayList<Rom> m_roms = new ArrayList<Rom>();
     private List<String> m_predefIcons;
     private boolean m_hasNoKexec;
+    private ArrayList<String> m_extPaths;
 }
