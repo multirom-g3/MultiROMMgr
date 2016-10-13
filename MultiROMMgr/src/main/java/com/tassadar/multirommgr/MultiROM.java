@@ -172,10 +172,30 @@ public class MultiROM {
         String internal = findInternalRomName();
         ArrayList<String> externalPaths = new ArrayList<String>();
 
-        File[] storagePaths = MgrApp.getAppContext().getExternalFilesDirs(null);
-        for (File dir : storagePaths)
+        // make mount dir
+        List<String> mkdirCMD = Shell.SU.run(
+                "folder=\"/mnt/mrom/\";" +
+                "if [ ! -d \"$folder\" ]; then" +
+                "     mkdir \"$folder\";" +
+                "     exit 0;" +
+                "fi;");
+
+        List<String> storagePaths = Shell.SU.run("blkid | grep -E \"mmcblk1|sda\"");
+
+        for (String blockDevice : storagePaths)
         {
-            String path = dir.getAbsolutePath().split("Android")[0];
+            blockDevice = blockDevice.split(":")[0];
+            String path = "/mnt/mrom/" + blockDevice.split("/")[3];
+
+            List<String> mountCMD = Shell.SU.run(
+                    "folder=\"%s\";" +
+                    "if [ ! -d \"$folder\" ]" +
+                    " || [ \"$( mount | grep $folder | wc -l )\" -eq 0 ]; then" +
+                    "     mkdir -p $folder;" +
+                    "     mount %s \"$folder\";" +
+                    "     exit 0;" +
+                    "fi;"
+            , path, blockDevice);
 
             String device;
             SharedPreferences p = MgrApp.getPreferences();
@@ -185,25 +205,22 @@ public class MultiROM {
                     device = p.getString(SettingsFragment.DEV_DEVICE_NAME, Build.DEVICE);
             }
 
-            if (!path.equals("/storage/emulated/0/"))
+            Log.e(TAG, "Path is: " + path);
+
+            List<String> out = Shell.SU.run(
+                    "folder=\"%s/multirom-%s/\";" +
+                    "if [ -d \"$folder\" ]; then" +
+                    "     echo \"$folder\";" +
+                    "     exit 0;" +
+                    "fi;"
+                    , path, device);
+
+            if (out == null || out.isEmpty())
+                continue;
+            else
             {
-                Log.e(TAG, "Path is: " + path);
-
-                List<String> out = Shell.SU.run(
-                        "folder=\"%smultirom-%s/\";" +
-                        "if [ -d \"$folder\" ]; then" +
-                        "     echo \"$folder\";" +
-                        "     exit 0;" +
-                        "fi;"
-                        , path, device);
-
-                if (out == null || out.isEmpty())
-                    continue;
-                else
-                {
-                    Log.e(TAG, "External MRom path is: " + out.get(0));
-                    externalPaths.add(out.get(0));
-                }
+                Log.e(TAG, "External MRom path is: " + out.get(0));
+                externalPaths.add(out.get(0));
             }
         }
 
