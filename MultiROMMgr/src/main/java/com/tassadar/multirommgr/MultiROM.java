@@ -197,23 +197,11 @@ public class MultiROM {
                     "fi;"
             , path, blockDevice);
 
-            String device;
-            SharedPreferences p = MgrApp.getPreferences();
-            if (p.getString(Build.DEVICE, "").equals("g3")) {
-                    device = p.getString(SettingsFragment.DEV_DEVICE_NAME, Build.PRODUCT);
-            } else {
-                    device = p.getString(SettingsFragment.DEV_DEVICE_NAME, Build.DEVICE);
-            }
-
-            Log.e(TAG, "Path is: " + path);
-
             List<String> out = Shell.SU.run(
-                    "folder=\"%s/multirom-%s/\";" +
-                    "if [ -d \"$folder\" ]; then" +
-                    "     echo \"$folder\";" +
-                    "     exit 0;" +
-                    "fi;"
-                    , path, device);
+                    "folder=\"%s/multirom-*/\";" +
+                    "find $folder -type d;" +
+                    "exit 0;"
+                    , path);
 
             if (out == null || out.isEmpty())
                 continue;

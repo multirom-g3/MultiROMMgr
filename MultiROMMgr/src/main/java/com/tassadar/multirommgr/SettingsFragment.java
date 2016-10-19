@@ -155,7 +155,7 @@ public class SettingsFragment extends PreferenceFragment implements SharedPrefer
 
         Device dev;
         if (p.getString(SettingsFragment.DEV_DEVICE_NAME, Build.DEVICE) == "g3") {
-            dev = Device.load(p.getString(SettingsFragment.DEV_DEVICE_NAME, Build.PRODUCT));
+            dev = Device.load(p.getString(SettingsFragment.DEV_DEVICE_NAME, Build.MODEL));
         } else {
             dev = Device.load(p.getString(SettingsFragment.DEV_DEVICE_NAME, Build.DEVICE));
         }

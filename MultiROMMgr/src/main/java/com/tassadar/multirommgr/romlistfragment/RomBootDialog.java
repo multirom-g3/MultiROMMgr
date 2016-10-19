@@ -135,7 +135,7 @@ public class RomBootDialog extends DialogFragment implements View.OnClickListene
 
                 Device dev;
                 if (p.getString(SettingsFragment.DEV_DEVICE_NAME, Build.DEVICE).equals("g3")) {
-                    dev = Device.load(p.getString(SettingsFragment.DEV_DEVICE_NAME, Build.PRODUCT));
+                    dev = Device.load(p.getString(SettingsFragment.DEV_DEVICE_NAME, Build.MODEL));
                 } else {
                     dev = Device.load(p.getString(SettingsFragment.DEV_DEVICE_NAME, Build.DEVICE));
                 }

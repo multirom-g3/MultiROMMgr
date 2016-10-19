@@ -654,7 +654,7 @@
             ]
         },
         {
-            "names": [ "d850, g3_att_us" ],
+            "names": [ "d850", "LG-D850" ],
             "manifest_url": "https://multirom-g3.github.io/manifests/d850.json",
             "check_gpg": false,
             "ubuntu_touch": {
@@ -677,7 +677,7 @@
             ]
         },
         {
-            "names": [ "d851", "g3_tmo_us" ],
+            "names": [ "d851", "LG-D851" ],
             "manifest_url": "https://multirom-g3.github.io/manifests/d851.json",
             "check_gpg": false,
             "ubuntu_touch": {
@@ -700,7 +700,7 @@
             ]
         },
         {
-            "names": [ "d852, g3_bell_ca" ],
+            "names": [ "d852", "LG-D852" ],
             "manifest_url": "https://multirom-g3.github.io/manifests/d852.json",
             "check_gpg": false,
             "ubuntu_touch": {
@@ -723,7 +723,7 @@
             ]
         },
         {
-            "names": [ "d855, g3_global_com" ],
+            "names": [ "d855", "LG-D855" ],
             "manifest_url": "https://multirom-g3.github.io/manifests/d855.json",
             "check_gpg": false,
             "ubuntu_touch": {
@@ -746,7 +746,7 @@
             ]
         },
         {
-            "names": [ "d856, g3_open_cis" ],
+            "names": [ "d856", "LG-D856", "LG-D857", "LG-D858", "LG-D858HK", "LG-D859" ],
             "manifest_url": "https://multirom-g3.github.io/manifests/d856.json",
             "check_gpg": false,
             "ubuntu_touch": {
@@ -769,7 +769,7 @@
             ]
         },
         {
-            "names": [ "f400, g3_kt_kr" ],
+            "names": [ "f400", "LG-F400", "LG-F400K", "LG-F400S", "LG-F400L" ],
             "manifest_url": "https://multirom-g3.github.io/manifests/f400.json",
             "check_gpg": false,
             "ubuntu_touch": {
@@ -792,7 +792,7 @@
             ]
         },
         {
-            "names": [ "ls990, g3_spr_us" ],
+            "names": [ "ls990", "LG-LS990", "LGLS990" ],
             "manifest_url": "https://multirom-g3.github.io/manifests/ls990.json",
             "check_gpg": false,
             "ubuntu_touch": {
@@ -815,7 +815,7 @@
             ]
         },
         {
-            "names": [ "vs985, g3_vzw_us" ],
+            "names": [ "vs985", "LG-VS985", "VS985 4G" ],
             "manifest_url": "https://multirom-g3.github.io/manifests/vs985.json",
             "check_gpg": false,
             "ubuntu_touch": {
