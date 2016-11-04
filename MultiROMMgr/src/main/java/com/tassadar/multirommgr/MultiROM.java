@@ -134,20 +134,21 @@ public class MultiROM {
     public void findRoms() {
         String internal = findInternalRomName();
 
-        List<String> out = Shell.SU.run("\'%s/busybox\' ls -1 -p \"%s/roms/\"", m_path, m_path);
+        List<String> out = Shell.SU.run("\'%s/multirom\' -apkL", m_path);
         if (out == null || out.isEmpty())
             return;
 
         Rom rom;
         int type;
         String name;
+        String base_path;
+        String part_mount;
+        String uuid;
 
         for(int i = 0; i < out.size(); ++i) {
-            name = out.get(i);
-            if(!name.endsWith("/"))
-                continue;
+            String[] info = out.get(i).split(" ");
 
-            name = name.substring(0, name.length() - 1);
+            name = info[1].substring(5);
             if(name.equals(INTERNAL_ROM)) {
                 name = internal;
                 type = Rom.ROM_PRIMARY;
@@ -155,124 +156,43 @@ public class MultiROM {
                 type = Rom.ROM_SECONDARY;
             }
 
-            rom = new Rom(name, type);
+            base_path = info[2].substring(5);
+
+            if (info.length > 4) {
+                part_mount = String.format("%s (%s)", info[4].substring(10), info[7].substring(8));
+                uuid = info[6].substring(10);
+            } else {
+                part_mount = "Internal Storage";
+                uuid = null;
+            }
+
+            Log.v(TAG, "ROM: name="+name+"; base_path="+base_path+"; part_mount="+part_mount+"; uuid="+uuid);
+            rom = new Rom(name, type, base_path, part_mount, uuid);
             m_roms.add(rom);
         }
 
         Collections.sort(m_roms, new Rom.NameComparator());
 
-        // External ROMS
-        findExternalRoms();
-
         loadRomIconData();
         storeRomDataToProvider();
     }
 
-    public void findExternalRoms() {
-        String internal = findInternalRomName();
-        ArrayList<String> externalPaths = new ArrayList<String>();
+    private void loadRomIconData() {
+        List<String> out = new ArrayList<String>();
 
-        // make mount dir
-        List<String> mkdirCMD = Shell.SU.run(
-                "folder=\"/mnt/mrom/\";" +
-                "if [ ! -d \"$folder\" ]; then" +
-                "     mkdir \"$folder\";" +
-                "     exit 0;" +
-                "fi;");
+        for(Rom r : m_roms) {
+            List<String> icon_data = Shell.SU.run(
+                    "d=\"%s\";" +
+                    "if [ -f \"$d/.icon_data\" ]; then" +
+                    "    echo \"ROM:%s\";" +
+                    "    cat \"$d/.icon_data\";" +
+                    "fi",
+                    r.base_path, r.name);
 
-        List<String> storagePaths = Shell.SU.run("blkid | grep -E \"mmcblk1|sda\"");
-
-        for (String blockDevice : storagePaths)
-        {
-            blockDevice = blockDevice.split(":")[0];
-            String path = "/mnt/mrom/" + blockDevice.split("/")[3];
-
-            List<String> mountCMD = Shell.SU.run(
-                    "folder=\"%s\";" +
-                    "if [ ! -d \"$folder\" ]" +
-                    " || [ \"$( mount | grep $folder | wc -l )\" -eq 0 ]; then" +
-                    "     mkdir -p $folder;" +
-                    "     mount %s \"$folder\";" +
-                    "     exit 0;" +
-                    "fi;"
-            , path, blockDevice);
-
-            List<String> out = Shell.SU.run(
-                    "folder=\"%s/multirom-*/\";" +
-                    "find $folder -type d;" +
-                    "exit 0;"
-                    , path);
-
-            if (out == null || out.isEmpty())
+            if (icon_data == null || icon_data.isEmpty())
                 continue;
             else
-            {
-                Log.e(TAG, "External MRom path is: " + out.get(0));
-                externalPaths.add(out.get(0));
-            }
-        }
-
-        m_extPaths = externalPaths;
-
-        if (m_extPaths != null && !m_extPaths.isEmpty())
-        {
-            for (String m_extPath : m_extPaths)
-            {
-                List<String> out = Shell.SU.run("\'%s/busybox\' ls -1 -p \"%s/\"", m_path, m_extPath);
-                if (out == null || out.isEmpty())
-                    return;
-
-                Rom rom;
-                int type;
-                String name;
-
-                for(int i = 0; i < out.size(); ++i) {
-                    name = out.get(i);
-                    if(!name.endsWith("/"))
-                        continue;
-
-                    name = name.substring(0, name.length() - 1);
-                    type = Rom.ROM_SECONDARY;
-
-                    rom = new Rom(name, type, true, m_extPath);
-                    m_roms.add(rom);
-                }
-            }
-        }
-
-    }
-
-    private void loadRomIconData() {
-        // Load icon data
-        List<String> out = Shell.SU.run(
-                "IFS=$'\\n'; " +
-                "cd \"%s/roms\"; " +
-                "for d in $(\"%s/busybox\" ls -1); do " +
-                "    ([ ! -d \"$d\" ]) && continue;" +
-                "    ([ ! -f \"$d/.icon_data\" ]) && continue;" +
-                "    echo \"ROM:$d\";" +
-                "    cat \"$d/.icon_data\";" +
-                "done;",
-                m_path, m_path);
-
-        if (m_extPaths != null && !m_extPaths.isEmpty())
-        {
-            for (String path : m_extPaths)
-            {
-                List<String> cmd = Shell.SU.run(
-                        "IFS=$'\\n'; " +
-                        "cd \"%s\"; " +
-                        "for d in $(\"%s/busybox\" ls -1); do " +
-                        "    ([ ! -d \"$d\" ]) && continue;" +
-                        "    ([ ! -f \"$d/.icon_data\" ]) && continue;" +
-                        "    echo \"ROM:$d\";" +
-                        "    cat \"$d/.icon_data\";" +
-                        "done;",
-                        path, m_path);
-
-                if (cmd != null || !cmd.isEmpty())
-                    out.addAll(cmd);
-            }
+                out.addAll(icon_data);
         }
 
         if (out == null || out.isEmpty())
@@ -386,10 +306,7 @@ public class MultiROM {
                     "fi",
                     m_path, m_path, m_path, new_name, new_name);
         } else {
-            if (rom.isExternal)
-                Shell.SU.run("cd \"%s/\" && mv '%s' '%s'", rom.ext_Path, rom.name, new_name);
-            else
-                Shell.SU.run("cd \"%s/roms/\" && mv '%s' '%s'", m_path, rom.name, new_name);
+            Shell.SU.run("cd \"%s/../\" && mv '%s' '%s'", rom.base_path, rom.name, new_name);
         }
     }
 
@@ -399,18 +316,16 @@ public class MultiROM {
             return;
         }
 
-        if (rom.isExternal)
-            Shell.SU.run("'%s/busybox' chattr -R -i '%s/%s'; '%s/busybox' rm -rf '%s/%s'",
-                    m_path, rom.ext_Path, rom.name, m_path, rom.ext_Path, rom.name);
-        else
-            Shell.SU.run("'%s/busybox' chattr -R -i '%s/roms/%s'; '%s/busybox' rm -rf '%s/roms/%s'",
-                    m_path, m_path, rom.name, m_path, m_path, rom.name);
+        Shell.SU.run("'%s/busybox' chattr -R -i '%s'; '%s/busybox' rm -rf '%s'",
+                m_path, rom.base_path, m_path, rom.base_path);
     }
 
     public void bootRom(Rom rom) {
         String name = (rom.type == Rom.ROM_PRIMARY) ? INTERNAL_ROM : rom.name;
-        // TODO: fix booting into external ROMS
-        if(!rom.isExternal)
+        if (rom.uuid != null)
+            // Name_of_ROM++uuid=xxxx
+            Shell.SU.run("%s/multirom --boot-rom='%s'++uuid=%s", m_path, name, rom.uuid);
+        else
             Shell.SU.run("%s/multirom --boot-rom='%s'", m_path, name);
     }
 
@@ -421,36 +336,18 @@ public class MultiROM {
         // if android ROM check for boot.img, else kexec
         List<String> out;
 
-        if (rom.isExternal)
-        {
-            out = Shell.SU.run(String.format(
-                    "cd \"%s/%s\"; " +
-                    "if [ -d boot ] && [ -d system ] && [ -d data ] && [ -d cache ]; then" +
-                    "    if [ -e boot.img ]; then" +
-                    "        echo kexec;" +
-                    "    else" +
-                    "        echo normal;" +
-                    "    fi;" +
-                    "else" +
-                    "    echo kexec;" +
-                    "fi;",
-                    rom.ext_Path, rom.name));
-        }
-        else
-        {
-            out = Shell.SU.run(String.format(
-                    "cd \"%s/roms/%s\"; " +
-                    "if [ -d boot ] && [ -d system ] && [ -d data ] && [ -d cache ]; then" +
-                    "    if [ -e boot.img ]; then" +
-                    "        echo kexec;" +
-                    "    else" +
-                    "        echo normal;" +
-                    "    fi;" +
-                    "else" +
-                    "    echo kexec;" +
-                    "fi;",
-                    m_path, rom.name));
-        }
+        out = Shell.SU.run(String.format(
+                "cd \"%s\"; " +
+                "if [ -d boot ] && [ -d system ] && [ -d data ] && [ -d cache ]; then" +
+                "    if [ -e boot.img ]; then" +
+                "        echo kexec;" +
+                "    else" +
+                "        echo normal;" +
+                "    fi;" +
+                "else" +
+                "    echo kexec;" +
+                "fi;",
+                rom.base_path));
 
         if (out == null || out.isEmpty()) {
             Log.e(TAG, "Failed to check for kexec in ROM " + rom.name);
@@ -614,22 +511,11 @@ public class MultiROM {
             }
         }
 
-        if (rom.isExternal)
-        {
-            Shell.SU.run(
-                    "cd '%s/%s' && " +
-                    "echo '%s' > .icon_data &&" +
-                    "echo '%s' >> .icon_data"
-                    , rom.ext_Path, name, ic_type, data);
-        }
-        else
-        {
-            Shell.SU.run(
-                    "cd '%s/roms/%s' && " +
-                    "echo '%s' > .icon_data &&" +
-                    "echo '%s' >> .icon_data"
-                    , m_path, name, ic_type, data);
-        }
+        Shell.SU.run(
+                "cd '%s' && " +
+                "echo '%s' > .icon_data &&" +
+                "echo '%s' >> .icon_data"
+                , rom.base_path, ic_type, data);
 
         rom.icon_id = icon_id;
         rom.icon_hash = hash;
@@ -662,5 +548,4 @@ public class MultiROM {
     private ArrayList<Rom> m_roms = new ArrayList<Rom>();
     private List<String> m_predefIcons;
     private boolean m_hasNoKexec;
-    private ArrayList<String> m_extPaths;
 }

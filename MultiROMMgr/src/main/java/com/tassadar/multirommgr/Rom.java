@@ -64,20 +64,21 @@ public class Rom implements Parcelable {
         }
     }
 
+    public Rom(String name, int type, String base_path, String part_mount, String uuid) {
+        this.name = name;
+        this.type = type;
+        this.icon_id = R.drawable.romic_default;
+        this.icon_hash = null;
+        this.base_path = base_path;
+        this.part_mount = part_mount;
+        this.uuid = uuid;
+    }
+
     public Rom(String name, int type) {
         this.name = name;
         this.type = type;
         this.icon_id = R.drawable.romic_default;
         this.icon_hash = null;
-    }
-
-    public Rom(String name, int type, boolean isExternal, String ext_Path) {
-        this.name = name;
-        this.type = type;
-        this.icon_id = R.drawable.romic_default;
-        this.icon_hash = null;
-        this.isExternal = isExternal;
-        this.ext_Path = ext_Path;
     }
 
     public Rom(Parcel in) {
@@ -138,8 +139,9 @@ public class Rom implements Parcelable {
     public int type;
     public int icon_id;
     public String icon_hash;
-    public boolean isExternal = false;
-    public String ext_Path;
+    public String base_path;
+    public String part_mount;
+    public String uuid;
 
     private Drawable m_icon;
 }

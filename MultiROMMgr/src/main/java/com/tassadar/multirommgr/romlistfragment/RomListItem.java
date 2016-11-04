@@ -79,6 +79,9 @@ public class RomListItem extends LinearLayout implements View.OnClickListener {
         TextView t = (TextView)findViewById(R.id.rom_name);
         t.setText(rom.name);
 
+        TextView p = (TextView)findViewById(R.id.rom_path);
+        p.setText(rom.part_mount);
+
         View v = findViewById(R.id.erase_btn);
         v.setVisibility((rom.type == Rom.ROM_PRIMARY) ? View.INVISIBLE : View.VISIBLE);
 
