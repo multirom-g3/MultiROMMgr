@@ -93,8 +93,10 @@ public class MultiROM {
 
     public boolean findNokexecSupported() {
         List<String> out = Shell.SU.run("\'%s/busybox\' cat \"%s/multirom.ini\"", m_path, m_path);
-        if (out == null || out.isEmpty())
+        if (out == null || out.isEmpty()) {
+            m_hasNoKexec = false;
             return false;
+        }
 
         String entry;
         for(int i = 0; i < out.size(); ++i) {
@@ -102,11 +104,11 @@ public class MultiROM {
             if (entry.startsWith("no_kexec=")) {
                 entry = entry.substring(9); // strlen("no_kexec=");
                 if(!entry.isEmpty()) {
-            if (!entry.startsWith("0")) {
-                m_hasNoKexec = true;
-                return true;
-            }
-        }
+                    if (!entry.startsWith("0")) {
+                        m_hasNoKexec = true;
+                        return true;
+                    }
+                }
             }
         }
 

@@ -162,7 +162,6 @@ public class StatusAsyncTask extends AsyncTask <Void, String, StatusAsyncTask.Re
 
         res.kernel = new Kernel();
         res.kernel.findKexecHardboot(dev);
-        res.multirom.findNokexecSupported();
 
         publishProgress(Utils.getString(R.string.prog_download_manifest));
 

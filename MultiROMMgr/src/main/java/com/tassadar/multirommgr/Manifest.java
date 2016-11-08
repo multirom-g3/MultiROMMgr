@@ -182,7 +182,7 @@ public class Manifest {
                 r != null ? r.getVersionString() : null,
                 kernel);
 
-        m_kernelHasUpdate &= !m.hasNoKexec();
+        m_kernelHasUpdate &= !m.findNokexecSupported();
     }
 
     public void compareVersions(String multirom, String recovery, Kernel kernel) {
