@@ -33,6 +33,7 @@ public class RomIconGridAdapter extends BaseAdapter {
             R.drawable.romic_default,
             R.drawable.romic_android,
             R.drawable.romic_androidl,
+            R.drawable.romic_lineage,
             R.drawable.romic_cm1,
             R.drawable.romic_cm2,
             R.drawable.romic_pa,
