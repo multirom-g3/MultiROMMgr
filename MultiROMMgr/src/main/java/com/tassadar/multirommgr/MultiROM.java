@@ -150,6 +150,9 @@ public class MultiROM {
         for(int i = 0; i < out.size(); ++i) {
             String[] info = out.get(i).split(" ");
 
+            if (!info[1].startsWith("name="))
+                continue;
+
             name = info[1].substring(5);
             if(name.equals(INTERNAL_ROM)) {
                 name = internal;
