@@ -137,43 +137,70 @@ public class MultiROM {
         String internal = findInternalRomName();
 
         List<String> out = Shell.SU.run("\'%s/multirom\' -apkL", m_path);
+
         if (out == null || out.isEmpty())
-            return;
+        {
+            // Fallback to old method
+            out = Shell.SU.run("\'%s/busybox\' ls -1 -p \"%s/roms/\"", m_path, m_path);
+            if (out == null || out.isEmpty())
+                return;
 
-        Rom rom;
-        int type;
-        String name;
-        String base_path;
-        String part_mount;
-        String uuid;
+            Rom rom;
+            int type;
+            String name;
 
-        for(int i = 0; i < out.size(); ++i) {
-            String[] info = out.get(i).split(" ");
+            for(int i = 0; i < out.size(); ++i) {
+                name = out.get(i);
+                if (!name.endsWith("/"))
+                    continue;
 
-            if (!info[1].startsWith("name="))
-                continue;
+                name = name.substring(0, name.length() - 1);
+                if (name.equals(INTERNAL_ROM)) {
+                    name = internal;
+                    type = Rom.ROM_PRIMARY;
+                } else {
+                    type = Rom.ROM_SECONDARY;
+                }
 
-            name = info[1].substring(5);
-            if(name.equals(INTERNAL_ROM)) {
-                name = internal;
-                type = Rom.ROM_PRIMARY;
-            } else {
-                type = Rom.ROM_SECONDARY;
+                rom = new Rom(name, type);
+                m_roms.add(rom);
             }
+        } else {
+            Rom rom;
+            int type;
+            String name;
+            String base_path;
+            String part_mount;
+            String uuid;
 
-            base_path = info[2].substring(5);
+            for(int i = 0; i < out.size(); ++i) {
+                String[] info = out.get(i).split(" ");
 
-            if (info.length > 4) {
-                part_mount = String.format("%s (%s)", info[4].substring(10), info[7].substring(8));
-                uuid = info[6].substring(10);
-            } else {
-                part_mount = "Internal Storage";
-                uuid = null;
+                if (!info[1].startsWith("name="))
+                    continue;
+
+                name = info[1].substring(5);
+                if(name.equals(INTERNAL_ROM)) {
+                    name = internal;
+                    type = Rom.ROM_PRIMARY;
+                } else {
+                    type = Rom.ROM_SECONDARY;
+                }
+
+                base_path = info[2].substring(5);
+
+                if (info.length > 4) {
+                    part_mount = String.format("%s (%s)", info[4].substring(10), info[7].substring(8));
+                    uuid = info[6].substring(10);
+                } else {
+                    part_mount = "Internal Storage";
+                    uuid = null;
+                }
+
+                Log.v(TAG, "ROM: name="+name+"; base_path="+base_path+"; part_mount="+part_mount+"; uuid="+uuid);
+                rom = new Rom(name, type, base_path, part_mount, uuid);
+                m_roms.add(rom);
             }
-
-            Log.v(TAG, "ROM: name="+name+"; base_path="+base_path+"; part_mount="+part_mount+"; uuid="+uuid);
-            rom = new Rom(name, type, base_path, part_mount, uuid);
-            m_roms.add(rom);
         }
 
         Collections.sort(m_roms, new Rom.NameComparator());
